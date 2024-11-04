@@ -9,6 +9,13 @@ import {
 import { Server, Socket } from "socket.io";
 import { ChatService } from "./chat.service";
 
+@WebSocketGateway({
+  cors: {
+    origin: 'http://localhost:3000', // Allow requests from your frontend origin
+    credentials: true,               // Enable credentials if needed
+  },
+})
+
 @WebSocketGateway()
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
