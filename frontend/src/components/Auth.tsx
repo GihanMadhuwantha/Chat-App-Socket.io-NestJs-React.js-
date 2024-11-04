@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { useNavigate } from "react-router-dom";
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
 
   const initialValues = { username: "", password: "" };
   const validationSchema = Yup.object().shape({
@@ -22,6 +24,10 @@ const Auth: React.FC = () => {
     if (response.ok) {
       const data = await response.json();
       console.log("Success:", data);
+      // Store the access token (optional, based on your requirements)
+      localStorage.setItem("access_token", data.access_token);
+      // Redirect to chat page
+      navigate("/chat");
     } else {
       console.error("Error:", response.statusText);
     }

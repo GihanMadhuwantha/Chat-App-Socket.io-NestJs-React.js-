@@ -7,30 +7,35 @@ import {
   OnGatewayDisconnect,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { ChatService } from "./chat.service";
+import { AuthService } from "../auth/auth.service"; // Import AuthService for validation
+import { UnauthorizedException } from "@nestjs/common";
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:3000', // Allow requests from your frontend origin
-    credentials: true,               // Enable credentials if needed
+    origin: 'http://localhost:3001', // Allow requests from your frontend origin
+    credentials: true,
   },
 })
-
-@WebSocketGateway()
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private chatService: ChatService) {}
+  constructor(private authService: AuthService) {}
 
-  afterInit(server: Server) {
-    console.log("WebSocket Initialized");
-  }
-
-  handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
+  async handleConnection(client: Socket) {
+    try {
+      const token = client.handshake.auth.token; // Assuming token is sent in handshake auth
+      if (!token) {
+        throw new UnauthorizedException('No token provided');
+      }
+      // Verify the token
+      const decoded = await this.authService.validateToken(token);
+      client.data.user = decoded; // Save user data in client for further use
+      console.log(`Client connected: ${client.id}`);
+    } catch (error) {
+      client.disconnect(); // Disconnect client if validation fails
+      console.log(`Client connection rejected: ${client.id}`);
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -42,7 +47,10 @@ export class ChatGateway
     client: Socket,
     payload: { username: string; message: string }
   ) {
-    // You can save the message to a database using chatService here
     this.server.emit("receiveMessage", payload); // Broadcast the message to all clients
+  }
+
+  afterInit(server: Server) {
+    console.log("WebSocket Initialized");
   }
 }
