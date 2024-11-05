@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
-const socket: Socket = io("http://localhost:5000");
+const token = localStorage.getItem("access_token");
+const socket: Socket = io("http://localhost:5000", {
+  auth: { token },
+});
 
 const Chat: React.FC = () => {
   const [username, setUsername] = useState<string>("");
   const [message, setMessage] = useState<string>("");
-  const [messages, setMessages] = useState<{ username: string; message: string }[]>([]);
+  const [messages, setMessages] = useState<
+    { username: string; message: string }[]
+  >([]);
 
   useEffect(() => {
     socket.on("receiveMessage", (data) => {
@@ -19,7 +24,11 @@ const Chat: React.FC = () => {
   }, []);
 
   const sendMessage = () => {
-    if (username && message) {
+    if (!username) {
+      alert("Please enter your name.");
+      return;
+    }
+    if (message.trim()) {
       socket.emit("sendMessage", { username, message });
       setMessage("");
     }
@@ -45,14 +54,20 @@ const Chat: React.FC = () => {
           onChange={(e) => setMessage(e.target.value)}
           className="border border-gray-300 rounded p-2 mr-2"
         />
-        <button onClick={sendMessage} className="bg-blue-500 text-white rounded p-2">Send</button>
+        <button
+          onClick={sendMessage}
+          className="bg-blue-500 text-white rounded p-2"
+        >
+          Send
+        </button>
       </div>
       <div className="bg-white p-4 rounded shadow-md w-full max-w-md">
         <h2 className="font-bold">Messages:</h2>
-        <ul className="list-disc">
+        <ul className="list-none">
           {messages.map((msg, index) => (
-            <li key={index}>
-              <strong>{msg.username}: </strong> {msg.message}
+            <li key={index} className="mb-1">
+              <strong>{msg.username}: </strong>
+              <span>{msg.message}</span>
             </li>
           ))}
         </ul>

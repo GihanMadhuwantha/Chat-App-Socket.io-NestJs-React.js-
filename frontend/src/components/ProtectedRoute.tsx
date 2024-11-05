@@ -6,14 +6,12 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const token = localStorage.getItem("access_token"); // Check if the access token exists
+  const token = localStorage.getItem("access_token");
 
-  // If token is not present, redirect to login
   if (!token) {
     return <Navigate to="/" replace />;
   }
 
-  // If token exists, render the protected component (e.g., Chat)
   return children;
 };
 

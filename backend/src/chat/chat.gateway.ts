@@ -7,16 +7,18 @@ import {
   OnGatewayDisconnect,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { AuthService } from "../auth/auth.service"; // Import AuthService for validation
+import { AuthService } from "../auth/auth.service";
 import { UnauthorizedException } from "@nestjs/common";
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:3001', // Allow requests from your frontend origin
+    origin: "http://localhost:3000", // Allow requests from your frontend origin
     credentials: true,
   },
 })
-export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -24,16 +26,16 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token; // Assuming token is sent in handshake auth
+      const token = client.handshake.auth.token;
       if (!token) {
-        throw new UnauthorizedException('No token provided');
+        throw new UnauthorizedException("No token provided");
       }
       // Verify the token
       const decoded = await this.authService.validateToken(token);
       client.data.user = decoded; // Save user data in client for further use
       console.log(`Client connected: ${client.id}`);
     } catch (error) {
-      client.disconnect(); // Disconnect client if validation fails
+      client.disconnect();
       console.log(`Client connection rejected: ${client.id}`);
     }
   }
@@ -47,7 +49,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     client: Socket,
     payload: { username: string; message: string }
   ) {
-    this.server.emit("receiveMessage", payload); // Broadcast the message to all clients
+    this.server.emit("receiveMessage", payload);
   }
 
   afterInit(server: Server) {
